@@ -1,4 +1,4 @@
-const Rx = require("rxjs/Rx");
+const Observable = require("rxjs/Rx").Observable;
 const mqtt = require("mqtt").connect("mqtt://localhost");
 
 function isPrime(value) {
@@ -14,23 +14,18 @@ mqtt.on("connect", () => {
   mqtt.publish("node/connection", "je suis connecté");
 
   // publisher
-  Rx.Observable
-    .from(["a", "b", "cd", "efg", "h", "ijk", "lm"])
+  Observable.from(["a", "b", "cd", "efg", "h", "ijk", "lm"])
     .filter(ev => ev.length < 3)
     .delay(1000)
     .subscribe(ev => mqtt.publish("node/fromArray", ev));
 
   // publisher
-  Rx.Observable
-    .interval(100)
+  Observable.interval(100)
     .filter(isPrime)
     .bufferTime(10000)
     .subscribe(ev => mqtt.publish("node/prime", ev.toString()));
 });
 
 // consumer
-Rx.Observable
-  .fromEvent(mqtt, "message", (topic, message) => {
-    return { topic, message };
-  }) // we're converting the useful arguments of the mqtt event into a single object
+Observable.fromEvent(mqtt, "message", (topic, message) => ({ topic, message })) // we're converting the useful arguments of the mqtt event into a single object
   .subscribe(ev => console.log(`${ev.topic} > ${ev.message}`));
